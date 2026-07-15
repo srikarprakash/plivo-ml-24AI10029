@@ -4,3 +4,9 @@ Changed: tokenizer.py -> CharTokenizer, vocab built from all 913 unique chars in
 Dev bpb: 2.3593 -> 2.298
 Tokens in training corpus: 7,318,592 -> 5,703,936 (~22% fewer tokens for the same text)
 Conclusion: tokenizer was in fact the bigger lever, as expected. Params went 1,339,840 -> 1,550,080 (vocab grew), still well under the 2M cap, so there's ~450k of param budget left to spend.
+## Run 3: wider model + weight tying
+Hypothesis: char tokenizer freed us from being context-bottlenecked; with tokens now more information-dense, more model capacity should help, and tying weights buys headroom to afford it under the 2M param cap.
+Changed: n_embd 160 -> 176, tie_weights True (was False). Same LR schedule/clip as Run 1, same tokenizer as Run 2.
+Dev bpb: 2.298 -> 2.2763
+Params: 1,550,080 -> 1,840,256 (still under 2,000,000 cap)
+Conclusion: extra width + tying helped further. ~160k param headroom left; diminishing returns expected from width alone at this point.
