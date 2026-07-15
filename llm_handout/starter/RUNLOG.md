@@ -32,3 +32,8 @@ Hypothesis: starter model.py used one flat std=0.05 for every weight (flagged as
 Changed: added depth-scaled init for attn.proj.weight and mlp.2.weight only (std=0.05/sqrt(2*4)=0.0177). Everything else identical to Run 6 (batch=16, BPE vocab 2048, tied weights, n_embd=176, lr=9e-4).
 Dev bpb: 1.9502 -> 1.9076
 Conclusion: clean isolated win - only variable changed was init. Train loss at step 2000 also lower than Run 6 (3.66 vs 3.74) at identical config otherwise, consistent with better-conditioned optimization from the start, not just noise.
+## Run 8: batch size 16 -> 32
+Hypothesis: Run 6 showed data coverage was the single biggest lever; scaling further to ~3.3 full passes over the corpus (2000x32x128=8,192,000 tokens vs a 2,449,817-token corpus) should continue to help.
+Changed: --batch 16 -> 32. Everything else identical to Run 7 (BPE vocab 2048, tied weights, n_embd=176, lr=9e-4, depth-scaled init, AdamW+warmup/cosine+clip).
+Dev bpb: 1.9076 -> 1.7898
+Conclusion: largest single-run win of the session. Confirms data coverage remained the dominant lever even after 3+ effective passes. Cost was ~2x wall-clock (767s vs 367s), no params, no step-cap risk. Stopping experimentation here to leave time for deliverables — trend suggests batch=64 might help further, untested due to time budget.
