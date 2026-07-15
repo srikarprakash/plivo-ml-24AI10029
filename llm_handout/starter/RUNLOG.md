@@ -27,3 +27,8 @@ Hypothesis: steps x batch x block_size = 2000x8x128 = 2,048,000 tokens processed
 Changed: --batch 8 -> 16. Everything else identical to Run 5 (BPE vocab 2048, tied weights, n_embd=176, lr=9e-4, AdamW+warmup/cosine+clip).
 Dev bpb: 2.077 -> 1.9502
 Conclusion: biggest single win of the hour. Confirms the model was data-starved, not capacity- or optimizer-starved. Cost: wall-clock only (~180ms/step vs ~103ms/step), no params, no step-cap risk.
+## Run 7: depth-scaled residual init
+Hypothesis: starter model.py used one flat std=0.05 for every weight (flagged as questionable in initial read). Weights that write INTO the residual stream (attn.proj, mlp's 2nd linear) compound variance across n_layer additions if not scaled down - standard GPT-2 fix is std/sqrt(2*n_layer) for exactly those weights.
+Changed: added depth-scaled init for attn.proj.weight and mlp.2.weight only (std=0.05/sqrt(2*4)=0.0177). Everything else identical to Run 6 (batch=16, BPE vocab 2048, tied weights, n_embd=176, lr=9e-4).
+Dev bpb: 1.9502 -> 1.9076
+Conclusion: clean isolated win - only variable changed was init. Train loss at step 2000 also lower than Run 6 (3.66 vs 3.74) at identical config otherwise, consistent with better-conditioned optimization from the start, not just noise.

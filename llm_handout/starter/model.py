@@ -67,6 +67,12 @@ class GPT(nn.Module):
         if cfg.tie_weights:
             self.head.weight = self.tok_emb.weight
         self.apply(self._init)
+        # depth-scaled init: shrink the weights that write INTO the residual
+        # stream (attn output proj, mlp's 2nd linear) so their variance
+        # doesn't compound across n_layer additions — standard GPT-2 fix
+        for pn, p in self.named_parameters():
+            if pn.endswith('attn.proj.weight') or pn.endswith('mlp.2.weight'):
+                nn.init.normal_(p, mean=0.0, std=0.05 / math.sqrt(2 * cfg.n_layer))
 
     def _init(self, m):
         # baseline init: plain normal, one std for everything
