@@ -22,3 +22,8 @@ Dev bpb: 2.1901 -> 2.077
 Tokens in training corpus: 5,703,936 (char) -> 2,449,817 (BPE) - each token now covers ~3x more bytes than char-level.
 Note: raw train loss appears higher (4.17 vs 1.99) but is NOT comparable across tokenizers - larger vocab (2048 vs 913) means harder per-token softmax classification even as bpb (the byte-normalized, tokenizer-agnostic metric) improved.
 Conclusion: best result of the hour. BPE + correctly-applied weight tying together were the two biggest wins.
+## Run 6: batch size 8 -> 16 (data coverage)
+Hypothesis: steps x batch x block_size = 2000x8x128 = 2,048,000 tokens processed total, which is LESS than the 2,449,817-token BPE corpus - the model wasn't even completing one pass over its own training data. Increasing batch (allowed to change, doesn't touch the 2000-step cap) should let it see meaningfully more real content.
+Changed: --batch 8 -> 16. Everything else identical to Run 5 (BPE vocab 2048, tied weights, n_embd=176, lr=9e-4, AdamW+warmup/cosine+clip).
+Dev bpb: 2.077 -> 1.9502
+Conclusion: biggest single win of the hour. Confirms the model was data-starved, not capacity- or optimizer-starved. Cost: wall-clock only (~180ms/step vs ~103ms/step), no params, no step-cap risk.
