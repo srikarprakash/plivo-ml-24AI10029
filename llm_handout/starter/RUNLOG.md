@@ -15,3 +15,10 @@ Hypothesis: loss curve in Run 3 was still dropping steeply with no instability a
 Changed: peak lr 6e-4 -> 9e-4. Everything else identical to Run 3 (n_embd=176, tied weights, char tokenizer, AdamW+warmup/cosine+clip).
 Dev bpb: 2.2763 -> 2.1901
 Conclusion: biggest single-run improvement so far. Loss curve stayed smooth (no spikes), confirming 9e-4 wasn't past the stability boundary. This is the best config found; used for the final run.
+## Run 5: BPE tokenizer (replacing char-level) + fixed weight tying
+Hypothesis: char-level tokenizer was better than byte-level but still spends one token per character; BPE merges frequent subword/conjunct sequences into single tokens, letting each 128-token window cover more real text. Also discovered tie_weights wasn't actually engaging in Runs 3-4 (observed params matched the untied formula) — fixing it is required to afford BPE's larger vocab under the 2M cap.
+Changed: tokenizer.py -> byte-level BPE, vocab 2048, merges learned on a 1MB sample of train_corpus.txt, byte fallback preserved (verified lossless on corpus + unseen emoji/CJK/control chars). Fixed tie_weights to actually apply (confirmed via params: 2,239,776 untied -> 1,879,328 tied). Same n_embd=176, lr=9e-4, AdamW+warmup/cosine+clip as Run 4.
+Dev bpb: 2.1901 -> 2.077
+Tokens in training corpus: 5,703,936 (char) -> 2,449,817 (BPE) - each token now covers ~3x more bytes than char-level.
+Note: raw train loss appears higher (4.17 vs 1.99) but is NOT comparable across tokenizers - larger vocab (2048 vs 913) means harder per-token softmax classification even as bpb (the byte-normalized, tokenizer-agnostic metric) improved.
+Conclusion: best result of the hour. BPE + correctly-applied weight tying together were the two biggest wins.

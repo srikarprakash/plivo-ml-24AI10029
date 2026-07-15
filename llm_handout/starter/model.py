@@ -10,14 +10,13 @@ import torch.nn.functional as F
 
 
 class Config:
-    vocab_size = 256      # byte-level tokenizer default
+    vocab_size = 256
     block_size = 128
     n_layer = 4
     n_head = 4
     n_embd = 176
-    tie_weights = True
     dropout = 0.0
-    tie_weights = False   # <- one of many things worth questioning
+    tie_weights = True
 
 
 class SelfAttention(nn.Module):
